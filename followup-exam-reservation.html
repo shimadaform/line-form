@@ -838,6 +838,21 @@
         <div class="inline-error" id="findingsError" role="alert"></div>
       </div>
 
+      <div class="field">
+        <div class="label" id="medicationLabel">現在内服している薬<span class="required">必須</span></div>
+        <div class="checkboxes inline" role="radiogroup" aria-labelledby="medicationLabel">
+          <label><input type="radio" name="hasMedication" value="有" id="hasMedicationYes" required>有</label>
+          <label><input type="radio" name="hasMedication" value="無" required>無</label>
+        </div>
+        <div class="other-detail" id="medicationDetail">
+          <textarea name="medicationDetail" id="medicationDetailInput" rows="3" placeholder="例:アムロジピン、メトホルミン"
+            aria-label="現在内服している薬の名前" autocomplete="off" maxlength="500" style="margin-top:8px;"></textarea>
+          <div class="help">※ お薬手帳をご確認のうえ、わかる範囲でご記入ください。</div>
+          <div class="inline-error" id="medicationDetailError" role="alert"></div>
+        </div>
+        <div class="inline-error" id="medicationError" role="alert"></div>
+      </div>
+
       <!-- ▼「症状の有無」項目は現在無効化中（コメントアウト）。復活させる場合は、この行と末尾の閉じ記号を外してください。
       <div class="field">
         <div class="label" id="hasSymptomLabel">症状の有無<span class="required">必須</span></div>
@@ -1326,6 +1341,28 @@
           });
         });
 
+        // ▼ 現在内服している薬:「有」選択時のみ薬名入力欄を表示
+        const hasMedicationYes = document.getElementById('hasMedicationYes');
+        const medicationDetail = document.getElementById('medicationDetail');
+        const medicationDetailInput = document.getElementById('medicationDetailInput');
+        document.querySelectorAll('input[name="hasMedication"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            if (hasMedicationYes.checked) {
+              medicationDetail.classList.add('show');
+            } else {
+              medicationDetail.classList.remove('show');
+              medicationDetailInput.value = '';
+              clearInlineError(medicationDetailInput, 'medicationDetailError');
+            }
+            clearInlineError(null, 'medicationError');
+          });
+        });
+        medicationDetailInput.addEventListener('input', () => {
+          if (medicationDetailInput.classList.contains('has-error')) {
+            clearInlineError(medicationDetailInput, 'medicationDetailError');
+          }
+        });
+
         const applicantOtherCheck = document.getElementById('applicantOtherCheck');
         const applicantOtherInput = document.getElementById('applicantOtherInput');
         const applicantOtherDetail = document.getElementById('applicantOtherDetail');
@@ -1691,6 +1728,23 @@
         const firstCheckbox = form.querySelector('input[name="findings"]');
         if (firstCheckbox) firstCheckbox.focus();
         return null;
+      }
+
+      // ▼ 現在内服している薬
+      const medicationSelected = form.querySelector('input[name="hasMedication"]:checked');
+      if (!medicationSelected) {
+        showInlineError(null, 'medicationError', '現在内服している薬の有無を選択してください');
+        const firstMedicationRadio = form.querySelector('input[name="hasMedication"]');
+        if (firstMedicationRadio) firstMedicationRadio.focus();
+        return null;
+      }
+      if (medicationSelected.value === '有') {
+        const medInput = document.getElementById('medicationDetailInput');
+        if (!medInput.value.trim()) {
+          showInlineError(medInput, 'medicationDetailError', '内服している薬の名前をご記入ください');
+          medInput.focus();
+          return null;
+        }
       }
 
       const checkupDate = form.querySelector('input[name="checkupDate"]').value;
