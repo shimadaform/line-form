@@ -6,7 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#00796b">
   <meta name="robots" content="noindex">
-  <title>インフルエンザワクチン接種予約お申込み・外来予約変更/キャンセルのお申込み</title>
+  <!-- タイトルは、JS の「設定」ブロックの VACCINE_MENU_HIDE_FROM の日（2027年4月1日）から
+       JS が「外来予約の変更/キャンセル」（VACCINE_MENU_HIDDEN_TITLE）に切り替えます -->
+  <title>ワクチン予約・外来予約の変更/キャンセル</title>
 
   <!-- =============================================================
        vaccine-flu-standalone.html
@@ -964,7 +966,6 @@
       <h3>ご利用にあたって</h3>
       <p>このウェブキャンセルシステムは下記の点をご了承頂く必要があります。</p>
       <ul>
-        <li>お伺いする日は予約変更希望日であり、確定ではありません。結果は改めてショートメールでお伝えします。</li>
         <li>お申込み頂いた内容は、月～土（祝日除く）の午後に確認し、ご連絡いたします。</li>
       </ul>
     </div>
@@ -1258,7 +1259,7 @@
     // （ここには ?type を付けない /exec までのURLを書いてください）。
     // ※ このページは LINE を使わないため、idToken（LINE の認証情報）や LINEユーザーID は送りません。
     //    受付GASも LINE の認証はせず、APP_TOKEN（合言葉）が一致する送信だけを受け付けます。
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwqEd42Y9LvSASE6OY0Y4OeW1jcJ4NrFVZ_RVq8ZoJZT1UoaXetEpUsgYZQ4usUx4Mw/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwqEd42Y9LvSASE6OY0Y4OeW1jcJ4NrFVZ_RVq8ZoJZT1UoaXetEpUsgYZQ4usUx4Mw/exec';
 
     // 送信用 GAS と共有する合言葉
     const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';
@@ -1353,6 +1354,12 @@
     //   表示しなくなる日（'YYYY-MM-DD'）。この日からは下段の「予約変更・キャンセルのお申込み」だけになります。
     //   見ている方の端末の日付で判定します。'' にすると常に表示します。
     const VACCINE_MENU_HIDE_FROM = '2027-04-01';
+
+    // VACCINE_MENU_HIDE_FROM の日（2027年4月1日）からのページのタイトル（ブラウザのタブなどに出る名前）
+    //   それまでは HTML の <title>（ワクチン予約・外来予約の変更/キャンセル）のままです。
+    //   上段の表示と同じく、見ている方の端末の日付で切り替えます。
+    // ※ URL を送ったときのリンクのプレビューなど、JS が動かない場面では HTML の <title> が使われます。
+    const VACCINE_MENU_HIDDEN_TITLE = '外来予約の変更/キャンセル';
 
     // 希望日フィールドの設定（第3希望日は予約変更のときだけ表示されます）
     const FORM_CFG = {
@@ -2485,13 +2492,18 @@
        ① 申込画面の上段（ワクチン接種の予約申し込み）の表示期間
          VACCINE_MENU_HIDE_FROM の日になったら上段（見出し＋ボタン2つ）を隠し、
          下段の「予約変更・キャンセルのお申込み」だけを表示します。
-         ページを開いたまま日付をまたいだ場合も、画面に戻ったときに隠します（watchDateBoundaries）。
+         あわせてページのタイトルを VACCINE_MENU_HIDDEN_TITLE（外来予約の変更/キャンセル）に切り替えます。
+         ページを開いたまま日付をまたいだ場合も、画面に戻ったときに切り替えます（watchDateBoundaries）。
        ============================================================= */
 
+    // HTML の <title>（上段を表示している期間のタイトル）
+    const DEFAULT_PAGE_TITLE = document.title;
+
     function applyVaccineMenuPeriod(b) {
+      const hide = !!VACCINE_MENU_HIDE_FROM && b.TODAY >= VACCINE_MENU_HIDE_FROM;
       const menu = document.getElementById('vaccineMenu');
-      if (!menu) return;
-      menu.hidden = !!VACCINE_MENU_HIDE_FROM && b.TODAY >= VACCINE_MENU_HIDE_FROM;
+      if (menu) menu.hidden = hide;
+      document.title = hide ? VACCINE_MENU_HIDDEN_TITLE : DEFAULT_PAGE_TITLE;
     }
 
 
@@ -2988,7 +3000,7 @@
       watchDateBoundaries(b => {
         applyPreferredDateBoundaries(FORM_CFG, b);
         applyReservedDateBoundaries(b);
-        applyVaccineMenuPeriod(b);   // 2027年4月1日からは ① 申込画面の上段を隠す
+        applyVaccineMenuPeriod(b);   // 2027年4月1日からは ① 申込画面の上段を隠し、タイトルを切り替える
       });
 
       applyClosedDayNotice();
